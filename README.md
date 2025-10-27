@@ -43,8 +43,6 @@ The experiments are structured as follows:
 | ELMo | Mean | LN | KMeans | AG News | LM + Mean + LN + KM |
 | ELMo | Mean | I | KMeans | DBpedia | LM + Mean + I + KM |
 | ELMo | Mean | N | KMeans | AG News, DBpedia, Yahoo | LM + Mean + N + KM |
-| InferSent | LN | KMeans | DBpedia | InferSent + LN + KM |
-| InferSent | N | KMeans | AG News | InferSent + N + KM |
 | BERT | Max | LN | KMeans | AG News, DBpedia | BERT + Max + LN + KM |
 
 ---
