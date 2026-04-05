@@ -1,55 +1,229 @@
 # Deep Feature-Based Text Clustering and its Explanation
 
-This repository reproduces the main experiments and ideas from the paper:
+This repository implements and analyzes the methodology proposed in:
 
-> **Deep Feature-Based Text Clustering and its Explanation**  
-> *Zhao et al., Knowledge-Based Systems (2021)*
+> **Zhao et al. (2021)**  
+> *Deep Feature-Based Text Clustering and its Explanation*, Knowledge-Based Systems
 
-The goal of this project is to explore how **deep pretrained representations** (ELMo, InferSent, BERT) can be used for **unsupervised text clustering**, and how to interpret cluster assignments using the **TCRE** (Text Clustering Result Explanation) model.
-
----
-
-## 📘 Overview
-
-The pipeline consists of three main components:
-
-1. **Feature Extraction**  
-   - Extract deep embeddings using pretrained models:  
-     - [ELMo](https://allennlp.org/elmo)  
-     - [InferSent](https://github.com/facebookresearch/InferSent)  
-     - [BERT](https://huggingface.co/bert-base-uncased)  
-   - Pooling strategies: `mean`, `max`, or `last`  
-   - Normalization: `Identity (I)`, `LayerNorm (LN)`, `L2 Norm (N)`
-
-2. **Clustering**  
-   - K-Means (`KM`) is used to group documents in the embedding space.  
-   - Evaluation metrics:  
-     - **ACC** – Clustering accuracy  
-     - **NMI** – Normalized Mutual Information  
-     - **ARI** – Adjusted Rand Index  
-
-3. **Explainability (TCRE)**  
-   - A logistic regression model identifies **indication words** for each cluster.  
-   - Words with the highest absolute weights are used to interpret cluster semantics.
+The objective of this project is to investigate the effectiveness of **deep contextual embeddings** for unsupervised text clustering and to study how clustering results can be interpreted through **post-hoc explainability methods (TCRE-style)**.
 
 ---
 
-## 🧩 Experiments
+## 📌 Project Objective
 
-The experiments are structured as follows:
+The main goals of this work are:
 
-| Model | Pooling | Normalization | Clustering | Dataset(s) | Description |
-|:------|:--------|:--------------|:------------|:------------|:-------------|
-| ELMo | Mean | LN | KMeans | AG News | LM + Mean + LN + KM |
-| ELMo | Mean | I | KMeans | DBpedia | LM + Mean + I + KM |
-| ELMo | Mean | N | KMeans | AG News, DBpedia, Yahoo | LM + Mean + N + KM |
-| BERT | Max | LN | KMeans | AG News, DBpedia | BERT + Max + LN + KM |
+- Evaluate the effectiveness of pretrained language model embeddings for text clustering
+- Study the impact of pooling and normalization strategies on clustering performance
+- Compare different clustering algorithms (K-Means and Agglomerative Clustering)
+- Provide interpretable explanations of clusters using a linear surrogate model (TCRE approach)
 
 ---
 
-## 📊 Visualization
+## ⚙️ Methodology
 
-The notebook includes a t-SNE–based visualization of the learned features and cluster assignments.
+The proposed pipeline follows a standard representation-learning and clustering workflow:
 
-```python
-visualize_clusters(X_norm, y_pred, title="BERT + Max + LN + KM on AG News")
+> **Text → Pretrained Encoder → Pooling → Normalization → Clustering → Evaluation → Explanation**
+
+---
+
+## 1. Text Representation
+
+Documents are encoded using pretrained contextual language models:
+
+- **ELMo**
+- **BERT** (`bert-base-uncased`)
+
+### Pooling Strategies
+To obtain fixed-size sentence embeddings:
+
+- Mean pooling
+- Max pooling
+- Last token representation
+
+### Normalization Techniques
+
+- **Identity (I)**: no normalization
+- **Layer Normalization (LN)**: stabilizes embedding distribution
+- **L2 Normalization (N)**: projects embeddings onto the unit hypersphere
+
+> Key insight: the geometric properties of embeddings strongly influence clustering quality.
+
+---
+
+## 2. Clustering Methods
+
+The following clustering algorithms are evaluated:
+
+### K-Means
+- Assumes spherical and isotropic clusters
+- Performs well on well-separated embedding spaces
+- Computationally efficient
+
+### Agglomerative Clustering
+- Hierarchical bottom-up approach
+- Captures local structure in the data
+- More sensitive to noise and representation quality
+
+---
+
+## 3. Evaluation Metrics
+
+Clustering performance is evaluated using standard external metrics:
+
+- **ACC (Clustering Accuracy)**: computed after optimal label alignment
+- **NMI (Normalized Mutual Information)**
+- **ARI (Adjusted Rand Index)**
+
+These metrics measure agreement between predicted clusters and ground-truth labels.
+
+---
+
+## 4. Interpretability (TCRE-style Explanation)
+
+To improve interpretability of clustering results, a post-hoc explanation model is applied:
+
+1. Cluster assignments are treated as pseudo-labels  
+2. A **Logistic Regression classifier** is trained using Bag-of-Words features  
+3. The most influential words (highest absolute weights) are extracted per cluster  
+
+This procedure provides **human-readable semantic interpretations** of clusters.
+
+---
+
+## 📊 Experimental Setup
+
+### Datasets
+
+Experiments are conducted on widely used text classification benchmarks:
+
+- AG News
+- DBpedia
+- Yahoo Answers
+- Reuters R5
+- Emotion dataset (short text classification)
+
+> The number of clusters is set equal to the number of ground-truth classes.
+
+---
+
+## 🧪 Controlled Variables
+
+The study systematically analyzes the impact of:
+
+- Pooling strategy
+- Normalization method
+
+All other components are kept fixed to ensure fair comparison.
+
+---
+
+## 📈 Key Results
+
+### 1. Representation Quality is the Dominant Factor
+Clustering performance is primarily determined by embedding quality rather than the clustering algorithm itself.
+
+---
+
+### 2. Best Performing Configuration
+
+The most consistent and robust configuration is:
+
+> **ELMo + Mean Pooling + Layer Normalization + K-Means**
+
+This setup achieves:
+- High clustering accuracy
+- Stable behavior across datasets
+- Good interpretability
+
+---
+
+### 3. Effect of Normalization
+
+- **LayerNorm**: most stable and robust across datasets
+- **L2 normalization**: beneficial for some structured datasets, but may degrade performance on others
+- **No normalization**: leads to unstable embedding geometry
+
+---
+
+### 4. Pooling Strategy
+
+- **Mean pooling**: most reliable and stable
+- **Max pooling**: often leads to anisotropic embeddings and degraded clustering performance
+- **Last token**: generally less stable
+
+---
+
+### 5. Clustering Algorithm Comparison
+
+- **K-Means**:
+  - Best for compact and isotropic embeddings
+- **Agglomerative Clustering**:
+  - Better for local or hierarchical structures
+  - More sensitive to noise
+
+---
+
+### 6. Dataset Difficulty
+
+| Dataset   | Behavior |
+|-----------|----------|
+| AG News   | Well-separated semantic classes |
+| DBpedia   | Structured but complex hierarchy |
+| Reuters R5| Strong separability |
+| Yahoo     | High lexical overlap, noisy clusters |
+| Emotion   | Short texts, weak semantic signal |
+
+---
+
+## 🧠 Interpretability Results
+
+### AG News (Best Case)
+Clusters show clear semantic structure:
+
+- **World**: political and international entities
+- **Sports**: teams, matches, competitions
+- **Business**: markets, finance, economy
+- **Sci/Tech**: technology, research, systems
+
+---
+
+### DBpedia
+Clusters reflect ontology-like categories:
+
+- Geography: cities, regions
+- Biology: species, taxonomy
+- Companies: organizations and firms
+- Arts: media, entertainment
+
+---
+
+### Failure Case (Yahoo Answers)
+Clustering quality degrades due to:
+
+- Informal language
+- High lexical overlap across topics
+- Presence of noisy tokens (e.g., URLs, slang)
+
+---
+
+## 📉 Limitations
+
+Clustering performance degrades under:
+
+- Short text length (low semantic context)
+- High class overlap
+- Anisotropic embedding spaces (especially with max pooling)
+- Poor normalization strategies
+
+---
+
+## 📌 Conclusions
+
+- Embedding geometry is the key determinant of clustering quality
+- Pooling and normalization significantly affect performance
+- K-Means remains a strong baseline for isotropic embeddings
+- Interpretability via TCRE confirms semantic coherence of clusters
+
+
